@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" />
+  <!-- Wrench & Gear Emblem -->
+  <g fill="none" stroke="#ffffff" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M140 372 L270 242" />
+    <path d="M225 185 C210 140 230 90 275 75 C310 63 348 78 368 108 L318 158 L354 194 L404 144 C434 164 449 202 437 237 C422 282 372 302 327 287 L225 389 C205 409 173 409 153 389 L123 359 C103 339 103 307 123 287 Z" fill="#ffffff" fill-opacity="0.15" />
+    <circle cx="160" cy="352" r="16" fill="#ffffff" />
+  </g>
+</svg>

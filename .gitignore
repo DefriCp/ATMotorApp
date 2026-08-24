@@ -1,0 +1,6 @@
+node_modules
+dist
+release
+*.log
+bengkel_db.json
+.DS_Store
