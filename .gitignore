@@ -4,3 +4,6 @@ release
 *.log
 bengkel_db.json
 .DS_Store
+android/build
+android/app/build
+android/.gradle

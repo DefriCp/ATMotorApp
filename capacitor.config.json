@@ -1,0 +1,6 @@
+{
+  "appId": "com.atmotor.katalog",
+  "appName": "AT Motor Katalog Mobile",
+  "webDir": "mobile",
+  "bundledWebRuntime": false
+}
