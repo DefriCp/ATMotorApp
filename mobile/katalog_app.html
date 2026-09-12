@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AT Motor Katalog Mobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .no-scrollbar {
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-blue-500 selection:text-white">
+
+  <!-- TOP BAR ANDROID -->
+  <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-md">
+    <div class="px-4 py-3.5 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center font-black text-lg text-white shadow-md shadow-blue-500/30">
+          AT
+        </div>
+        <div>
+          <h1 class="font-extrabold text-sm tracking-tight text-white leading-none">AT Motor Tasikmalaya</h1>
+          <p class="text-[11px] text-blue-400 font-medium mt-0.5">Katalog Mobile (.APK)</p>
+        </div>
+      </div>
+
+      <!-- BUTTON UPLOAD DB BARU -->
+      <label for="jsonFileInput" class="cursor-pointer px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white text-xs font-bold transition-all shadow-md shadow-blue-600/30 flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <span>Upload DB</span>
+      </label>
+      <input type="file" id="jsonFileInput" accept=".json" class="hidden" onchange="handleFileSelect(event)">
+    </div>
+
+    <!-- SEARCH BAR & FILTER KATEGORI -->
+    <div class="px-4 pb-3.5 space-y-2.5 bg-slate-900 border-t border-slate-800">
+      <!-- Search Input -->
+      <div class="relative">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input
+          type="text"
+          id="searchInput"
+          oninput="renderProducts()"
+          placeholder="Cari Nama Sparepart..."
+          class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500 font-medium"
+        >
+      </div>
+
+      <!-- Kategori Chips -->
+      <div id="categoryChips" class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+        <button onclick="setFilterCategory('Semua')" class="cat-btn active px-3 py-1 rounded-lg font-bold bg-blue-600 text-white whitespace-nowrap shadow-xs transition-all">Semua</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN LIST CONTAINER -->
+  <main class="flex-1 p-4 pb-20 max-w-md mx-auto w-full space-y-3">
+    <!-- STATUS BANNER -->
+    <div id="statusBanner" class="p-3 rounded-2xl bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-center justify-between font-medium">
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="statusText">Mode Data Dummy Siap Digunakan (8 Sparepart).</span>
+      </div>
+    </div>
+
+    <!-- PRODUCT CARDS CONTAINER -->
+    <div id="productList" class="space-y-2.5">
+      <!-- Dynamic Products Render Here -->
+    </div>
+  </main>
+
+  <!-- FOOTER STATS -->
+  <footer class="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 px-4 py-2.5 shadow-lg">
+    <div class="max-w-md mx-auto flex items-center justify-between text-xs">
+      <div class="text-slate-500 font-medium">
+        Total Sparepart: <span id="totalItemCount" class="font-mono font-bold text-slate-900">0</span>
+      </div>
+      <div class="text-slate-500 font-medium">
+        Total Stok: <span id="totalStockCount" class="font-mono font-bold text-emerald-600">0 Unit</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- DUMMY DATA & LOGIC SCRIPT -->
+  <script>
+    // DATA DUMMY SPAREPART REALISTIS (BENGKEL MOTOR)
+    const DUMMY_PRODUCTS = [
+      { id: 1, nama: "Aki Motobatt MTZ5S 12V 4.2Ah", kategori: "Kelistrikan", harga_jual: 245000, stok: 6, stok_minimal: 2 },
+      { id: 2, nama: "Ban Tubeless FDR Sport XR 90/90-14", kategori: "Ban", harga_jual: 220000, stok: 8, stok_minimal: 3 },
+      { id: 3, nama: "Ban Tubeless IRC NR83 80/90-14", kategori: "Ban", harga_jual: 190000, stok: 10, stok_minimal: 3 },
+      { id: 4, nama: "Busi NGK CPR9EA-9 Vario/Beat", kategori: "Kelistrikan", harga_jual: 25000, stok: 30, stok_minimal: 5 },
+      { id: 5, nama: "Gear Set SSS Beat / Vario 110", kategori: "Drive Train", harga_jual: 235000, stok: 4, stok_minimal: 2 },
+      { id: 6, nama: "Kampas Rem Depan Vario/Beat AHM", kategori: "Rem", harga_jual: 48000, stok: 18, stok_minimal: 5 },
+      { id: 7, nama: "Oli AHM MPX 2 Matic 0.8L", kategori: "Oli & Pelumas", harga_jual: 58000, stok: 24, stok_minimal: 5 },
+      { id: 8, nama: "Oli Shell Advance AX7 1L", kategori: "Oli & Pelumas", harga_jual: 68000, stok: 15, stok_minimal: 5 }
+    ];
+
+    let rawProducts = [...DUMMY_PRODUCTS];
+    let currentCategory = 'Semua';
+
+    function formatRupiah(number) {
+      if (number === null || number === undefined) return 'Rp 0';
+      return 'Rp ' + Number(number).toLocaleString('id-ID');
+    }
+
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const json = JSON.parse(e.target.result);
+          if (json.produk && Array.isArray(json.produk)) {
+            rawProducts = json.produk;
+          } else if (Array.isArray(json)) {
+            rawProducts = json;
+          } else {
+            alert("Format JSON tidak valid!");
+            return;
+          }
+
+          // Urutkan A-Z
+          rawProducts.sort((a, b) => a.nama.localeCompare(b.nama, 'id', { sensitivity: 'base' }));
+
+          // Save to LocalStorage
+          try {
+            localStorage.setItem('atmotor_mobile_db', JSON.stringify(rawProducts));
+          } catch(err) {}
+
+          updateCategoryChips();
+          renderProducts();
+
+          const banner = document.getElementById('statusBanner');
+          banner.className = 'p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between font-medium';
+          document.getElementById('statusText').innerHTML = `File DB Dimuat: <b>${rawProducts.length} Sparepart</b> (Urut A-Z).`;
+        } catch (err) {
+          alert("Gagal membaca file JSON: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function setFilterCategory(kat) {
+      currentCategory = kat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        if (btn.innerText.trim() === kat) {
+          btn.className = 'cat-btn active px-3 py-1 rounded-lg font-bold bg-blue-600 text-white whitespace-nowrap shadow-xs transition-all';
+        } else {
+          btn.className = 'cat-btn px-3 py-1 rounded-lg font-bold bg-slate-800 text-slate-300 hover:text-white whitespace-nowrap transition-all';
+        }
+      });
+      renderProducts();
+    }
+
+    function updateCategoryChips() {
+      const categories = ['Semua', ...new Set(rawProducts.map(p => p.kategori).filter(Boolean))];
+      const chipsContainer = document.getElementById('categoryChips');
+      chipsContainer.innerHTML = categories.map(kat => `
+        <button onclick="setFilterCategory('${kat}')" class="cat-btn ${kat === currentCategory ? 'active bg-blue-600 text-white' : 'bg-slate-800 text-slate-300'} px-3 py-1 rounded-lg font-bold whitespace-nowrap transition-all">
+          ${kat}
+        </button>
+      `).join('');
+    }
+
+    function renderProducts() {
+      const search = document.getElementById('searchInput').value.toLowerCase().trim();
+      const listContainer = document.getElementById('productList');
+
+      const filtered = rawProducts.filter(p => {
+        const matchSearch = p.nama.toLowerCase().includes(search);
+        const matchCategory = currentCategory === 'Semua' || (p.kategori && p.kategori.toLowerCase() === currentCategory.toLowerCase());
+        return matchSearch && matchCategory;
+      });
+
+      document.getElementById('totalItemCount').innerText = filtered.length;
+      const totalStok = filtered.reduce((acc, curr) => acc + (parseInt(curr.stok) || 0), 0);
+      document.getElementById('totalStockCount').innerText = `${totalStok} Unit`;
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = `
+          <div class="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-200 text-slate-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 mx-auto mb-2 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <p class="font-bold text-xs text-slate-600">Tidak ada sparepart yang sesuai</p>
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = filtered.map(item => {
+        const stok = parseInt(item.stok) || 0;
+        const stokMin = parseInt(item.stok_minimal) || 5;
+        const isHabis = stok <= 0;
+        const isRendah = stok <= stokMin;
+
+        return `
+          <div class="p-3.5 rounded-2xl bg-white border border-slate-200 shadow-xs flex items-center justify-between gap-3 active:scale-[0.99] transition-transform">
+            <div class="min-w-0 flex-1">
+              <h3 class="font-bold text-slate-900 text-sm leading-snug truncate">${item.nama}</h3>
+              <div class="text-xs font-bold font-mono text-emerald-600 mt-1">
+                ${formatRupiah(item.harga_jual)}
+              </div>
+            </div>
+
+            <div class="shrink-0 text-right">
+              <span class="px-2.5 py-1 rounded-xl text-xs font-bold font-mono inline-block ${
+                isHabis 
+                  ? 'bg-rose-100 text-rose-700 border border-rose-200' 
+                  : isRendah 
+                  ? 'bg-amber-100 text-amber-800 border border-amber-200' 
+                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              }">
+                Stok: ${stok}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      try {
+        const cached = localStorage.getItem('atmotor_mobile_db');
+        if (cached) {
+          rawProducts = JSON.parse(cached);
+          document.getElementById('statusBanner').className = 'p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center justify-between font-medium';
+          document.getElementById('statusText').innerHTML = `Memuat tersimpan: <b>${rawProducts.length} Sparepart</b>`;
+        }
+      } catch(e) {}
+
+      rawProducts.sort((a, b) => a.nama.localeCompare(b.nama, 'id', { sensitivity: 'base' }));
+      updateCategoryChips();
+      renderProducts();
+    });
+  </script>
+</body>
+</html>
