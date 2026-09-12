@@ -1,7 +1,7 @@
 {
   "name": "bengkel-pos-app",
   "productName": "AT Motor POS",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Sistem Kasir POS dan Stock Opname Bengkel AT Motor Tasikmalaya",
   "main": "main.js",
   "scripts": {
