@@ -1,0 +1,21 @@
+{
+  "name": "AT Motor Katalog Mobile",
+  "short_name": "AT Motor",
+  "description": "Katalog Sparepart & Stok AT Motor Tasikmalaya",
+  "start_url": "./katalog_app.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "../src/assets/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "../src/assets/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
