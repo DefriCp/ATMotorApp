@@ -2,7 +2,12 @@ const path = require('path');
 const fs = require('fs');
 
 /**
- * Database SQLite Lokal Persistent Store Bengkel POS (Clean Production Mode - Hanya Akun Login)
+ * Database SQLite Lokal Persistent Store Bengkel POS
+ * Fitur:
+ * - Pengurutan Barang A-Z
+ * - Input Tanggal Backdate Transaksi
+ * - Montir Opsional (Tanpa Montir)
+ * - Diskon Mengurangi Laba Sparepart
  */
 
 class BengkelDatabase {
@@ -48,7 +53,6 @@ class BengkelDatabase {
   }
 
   seedUsers() {
-    // Akun Tunggal Owner Bengkel: Username Admin | Password Atmotor123
     this.data.pengguna = [
       {
         id: 1,
@@ -144,7 +148,7 @@ class BengkelDatabase {
     return { success: true };
   }
 
-  // --- QUERY BARANG ---
+  // --- QUERY BARANG (DIURUTKAN ABJAD A-Z) ---
   getProduk(querySearch = '', kategori = '') {
     let result = [...this.data.produk];
     if (kategori && kategori !== 'Semua') {
@@ -154,6 +158,10 @@ class BengkelDatabase {
       const q = querySearch.toLowerCase();
       result = result.filter(p => p.nama.toLowerCase().includes(q));
     }
+
+    // Urutkan Abjad A-Z berdasarkan Nama Barang
+    result.sort((a, b) => a.nama.localeCompare(b.nama, 'id', { sensitivity: 'base' }));
+
     return result;
   }
 
@@ -170,7 +178,7 @@ class BengkelDatabase {
       created_at: new Date().toISOString()
     };
 
-    this.data.produk.unshift(newProduct);
+    this.data.produk.push(newProduct);
     this.saveDatabase();
     return newProduct;
   }
@@ -227,9 +235,9 @@ class BengkelDatabase {
     return this.data.stok_opname_log || [];
   }
 
-  // --- TRANSAKSI POS ---
+  // --- TRANSAKSI POS (MENDUKUNG BACKDATE TANGGAL & DISKON MEMOTONG LABA) ---
   simpanTransaksi(payload) {
-    const { items, subtotal_barang, ongkos_montir, nama_montir, diskon, total_akhir, bayar, kembalian } = payload;
+    const { items, subtotal_barang, ongkos_montir, nama_montir, diskon, total_akhir, bayar, kembalian, tanggal } = payload;
 
     let hppTotal = 0;
 
@@ -246,20 +254,35 @@ class BengkelDatabase {
 
     const txId = this.data.transaksi.length + 1;
     const now = new Date();
-    const noNota = `NOT-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(txId).padStart(4,'0')}`;
+    
+    // Format Tanggal Kustom (Backdate) atau Waktu Sekarang
+    let txTanggalISO = now.toISOString();
+    if (tanggal) {
+      if (tanggal.includes('T')) {
+        txTanggalISO = new Date(tanggal).toISOString();
+      } else {
+        const timePart = now.toTimeString().split(' ')[0];
+        txTanggalISO = new Date(`${tanggal}T${timePart}`).toISOString();
+      }
+    }
 
-    const labaBarang = parseFloat(subtotal_barang || 0) - hppTotal;
+    const dObj = new Date(txTanggalISO);
+    const noNota = `NOT-${dObj.getFullYear()}${String(dObj.getMonth()+1).padStart(2,'0')}${String(dObj.getDate()).padStart(2,'0')}-${String(txId).padStart(4,'0')}`;
+
+    // Diskon mengurangi laba bersih sparepart secara langsung!
+    const diskonVal = parseFloat(diskon || 0);
+    const labaBarang = (parseFloat(subtotal_barang || 0) - hppTotal) - diskonVal;
 
     const transaksiBaru = {
       id: txId,
       no_nota: noNota,
-      tanggal: now.toISOString(),
+      tanggal: txTanggalISO,
       subtotal_barang: parseFloat(subtotal_barang || 0),
       hpp_barang: hppTotal,
       laba_barang: labaBarang,
       ongkos_montir: parseFloat(ongkos_montir || 0),
-      nama_montir: nama_montir || "Montir Bengkel",
-      diskon: parseFloat(diskon || 0),
+      nama_montir: nama_montir && nama_montir.trim() ? nama_montir.trim() : "Tanpa Montir",
+      diskon: diskonVal,
       total_akhir: parseFloat(total_akhir),
       bayar: parseFloat(bayar),
       kembalian: parseFloat(kembalian)
@@ -381,13 +404,16 @@ class BengkelDatabase {
 
     const totalOmsetBarangAll = this.data.transaksi.reduce((acc, curr) => acc + curr.subtotal_barang, 0);
     const totalHppBarangAll = this.data.transaksi.reduce((acc, curr) => acc + (curr.hpp_barang || 0), 0);
-    const totalLabaBarangAll = totalOmsetBarangAll - totalHppBarangAll;
+    const totalDiskonAll = this.data.transaksi.reduce((acc, curr) => acc + (curr.diskon || 0), 0);
+    
+    // Laba Sparepart All = Total Omset - Total HPP - Total Diskon
+    const totalLabaBarangAll = (totalOmsetBarangAll - totalHppBarangAll) - totalDiskonAll;
 
     const totalOngkosMontirAll = this.data.transaksi.reduce((acc, curr) => acc + curr.ongkos_montir, 0);
 
     const totalBelanjaAll = this.data.belanja.reduce((acc, curr) => acc + curr.jumlah_biaya, 0);
 
-    // Laba Bersih Bengkel = Laba Sparepart - Total Belanja (Tanpa memasukkan Jasa Montir)
+    // Laba Bersih Bengkel = Laba Sparepart (setelah terpotong diskon) - Total Belanja
     const labaBersihAll = totalLabaBarangAll - totalBelanjaAll;
 
     const produkStokRendah = this.data.produk.filter(p => p.stok <= p.stok_minimal);
@@ -421,9 +447,10 @@ class BengkelDatabase {
       const txs = this.data.transaksi.filter(t => t.tanggal.startsWith(dateStr));
       const omsetBarang = txs.reduce((acc, curr) => acc + curr.subtotal_barang, 0);
       const hppBarang = txs.reduce((acc, curr) => acc + (curr.hpp_barang || 0), 0);
+      const diskonHariIni = txs.reduce((acc, curr) => acc + (curr.diskon || 0), 0);
       const omsetMontir = txs.reduce((acc, curr) => acc + curr.ongkos_montir, 0);
       const totalOmset = txs.reduce((acc, curr) => acc + curr.total_akhir, 0);
-      const labaHariIni = omsetBarang - hppBarang;
+      const labaHariIni = (omsetBarang - hppBarang) - diskonHariIni;
 
       days.push({
         tanggal: dateStr,

@@ -24,11 +24,14 @@ export default function InventoriPage({ produkList, onTambahBarang, onEditBarang
     fetchKategori();
   }, []);
 
-  const filteredProduk = produkList.filter(item => {
-    const matchSearch = item.nama.toLowerCase().includes(search.toLowerCase());
-    const matchKategori = selectedKategori === 'Semua' || item.kategori.toLowerCase() === selectedKategori.toLowerCase();
-    return matchSearch && matchKategori;
-  });
+  // Filter & Urutkan Produk Sesuai Abjad (A-Z)
+  const filteredProduk = produkList
+    .filter(item => {
+      const matchSearch = item.nama.toLowerCase().includes(search.toLowerCase());
+      const matchKategori = selectedKategori === 'Semua' || item.kategori.toLowerCase() === selectedKategori.toLowerCase();
+      return matchSearch && matchKategori;
+    })
+    .sort((a, b) => a.nama.localeCompare(b.nama, 'id', { sensitivity: 'base' }));
 
   const handleExportExcel = () => {
     const dataExcel = filteredProduk.map(p => ({
@@ -45,7 +48,7 @@ export default function InventoriPage({ produkList, onTambahBarang, onEditBarang
   };
 
   return (
-    <div className="p-6 space-y-6 h-[calc(100vh-4rem)] overflow-y-auto bg-slate-100">
+    <div className="p-6 space-y-6 h-[calc(100vh-4rem)] overflow-y-auto bg-slate-100 font-sans text-slate-800">
       {/* Top Header Actions */}
       <div className="flex items-center justify-between gap-4">
         <div>
@@ -53,7 +56,7 @@ export default function InventoriPage({ produkList, onTambahBarang, onEditBarang
             <Boxes className="w-6 h-6 text-blue-600" />
             BARANG (Master Sparepart Bengkel)
           </h1>
-          <p className="text-xs text-slate-500">Kelola master data barang sparepart, harga beli, harga jual, dan sisa stok.</p>
+          <p className="text-xs text-slate-500">Kelola master data barang sparepart diurutkan secara otomatis dari A-Z.</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -62,7 +65,7 @@ export default function InventoriPage({ produkList, onTambahBarang, onEditBarang
             className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition-colors flex items-center gap-2 text-xs font-bold shadow-md shadow-emerald-600/20"
           >
             <Download className="w-4 h-4" />
-            Export Excel
+            Export Excel ({filteredProduk.length} Barang)
           </button>
           <button
             onClick={() => { fetchKategori(); onRefresh(); }}
@@ -108,13 +111,13 @@ export default function InventoriPage({ produkList, onTambahBarang, onEditBarang
         </div>
       </div>
 
-      {/* Full-width Data Table */}
+      {/* Full-width Data Table (Urut Abjad A-Z) */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-700">
             <thead className="bg-slate-50 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-200">
               <tr>
-                <th className="px-6 py-4">Ikon & Nama Barang</th>
+                <th className="px-6 py-4">Ikon & Nama Barang (A-Z)</th>
                 <th className="px-6 py-4">Kategori</th>
                 <th className="px-6 py-4">Harga Beli</th>
                 <th className="px-6 py-4">Harga Jual</th>
