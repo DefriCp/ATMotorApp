@@ -235,7 +235,7 @@
   <!-- SCRIPT UTAMA PERBAIKAN -->
   <script>
     const DUMMY_PRODUCTS = [
-      { id: 1, nama: "Aki Motobatt MTZ5S 12V 4.2Ah", kategori: "Kelistrikan", harga_jual: 245000, stok: 6, stok_minimal: 2 },
+      { id: 1, nama: "Aki Motobatt MTZ5S 12V 4.2Ah", kategori: "Accu", harga_jual: 245000, stok: 6, stok_minimal: 2 },
       { id: 2, nama: "Ban Tubeless FDR Sport XR 90/90-14", kategori: "Ban", harga_jual: 220000, stok: 8, stok_minimal: 3 },
       { id: 3, nama: "Ban Tubeless IRC NR83 80/90-14", kategori: "Ban", harga_jual: 190000, stok: 10, stok_minimal: 3 },
       { id: 4, nama: "Busi NGK CPR9EA-9 Vario/Beat", kategori: "Kelistrikan", harga_jual: 25000, stok: 30, stok_minimal: 5 },
@@ -254,16 +254,35 @@
       return 'Rp ' + Number(number).toLocaleString('id-ID');
     }
 
+    function formatCategoryTitle(str) {
+      if (!str) return 'Lainnya';
+      return str.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    }
+
     function getCategoryEmoji(kat) {
-      if (!kat) return '📦';
-      const k = kat.toLowerCase();
-      if (k.includes('listrik') || k.includes('aki') || k.includes('busi')) return '⚡';
-      if (k.includes('ban') || k.includes('velg')) return '🛞';
-      if (k.includes('oli') || k.includes('pelumas') || k.includes('cairan')) return '💧';
-      if (k.includes('rem') || k.includes('pad')) return '🛑';
-      if (k.includes('drive') || k.includes('gear') || k.includes('rantai') || k.includes('vbelt')) return '⚙️';
-      if (k.includes('mesin') || k.includes('piston')) return '🔧';
-      return '📂';
+      if (!kat) return '🛠️';
+      const k = kat.toLowerCase().trim();
+      
+      if (k.includes('accu') || k.includes('aki') || k.includes('baterai')) return '🔋';
+      if (k.includes('aksesoris') || k.includes('variasi') || k.includes('hiasan')) return '🛵';
+      if (k.includes('ban') || k.includes('velg') || k.includes('roda') || k.includes('pentil')) return '🛞';
+      if (k.includes('baud') || k.includes('baut') || k.includes('mur') || k.includes('ring') || k.includes('sekrup')) return '🔩';
+      if (k.includes('bearing') || k.includes('laher') || k.includes('klaker')) return '🔘';
+      if (k.includes('drive') || k.includes('gear') || k.includes('rantai') || k.includes('vbelt') || k.includes('cvt') || k.includes('roller')) return '⚙️';
+      if (k.includes('kabel') || k.includes('wire') || k.includes('tali')) return '🔌';
+      if (k.includes('listrik') || k.includes('busi') || k.includes('spul') || k.includes('cdi') || k.includes('kiprok')) return '⚡';
+      if (k.includes('lampu') || k.includes('bohlam') || k.includes('led') || k.includes('sein')) return '💡';
+      if (k.includes('lem') || k.includes('sealer') || k.includes('gasket') || k.includes('pack') || k.includes('pak')) return '🧪';
+      if (k.includes('oli') || k.includes('pelumas') || k.includes('cairan') || k.includes('grease') || k.includes('minyak')) return '💧';
+      if (k.includes('rem') || k.includes('kampas') || k.includes('dispad') || k.includes('tromol')) return '🛑';
+      if (k.includes('mesin') || k.includes('piston') || k.includes('blok') || k.includes('klep') || k.includes('karbu') || k.includes('injektor')) return '🔧';
+      if (k.includes('shock') || k.includes('skok') || k.includes('suspensi')) return '🚜';
+      if (k.includes('knalpot') || k.includes('exhaust')) return '💨';
+      if (k.includes('body') || k.includes('cover') || k.includes('spakbor') || k.includes('sayap')) return '🛡️';
+      if (k.includes('filter') || k.includes('saringan')) return '🫗';
+      if (k.includes('spion') || k.includes('kaca')) return '🪞';
+      
+      return '🛠️';
     }
 
     function handleFileSelect(event) {
@@ -333,7 +352,6 @@
       const clearBtn = document.getElementById('clearSearchBtn');
       if (query.trim().length > 0) {
         clearBtn.classList.remove('hidden');
-        // Auto switch to list mode when searching
         activeViewMode = 'list';
       } else {
         clearBtn.classList.add('hidden');
@@ -352,7 +370,6 @@
     function renderUI() {
       const search = document.getElementById('searchInput').value.toLowerCase().trim();
       
-      // Update Tab Buttons UI
       const folderTab = document.getElementById('tabFolderBtn');
       const listTab = document.getElementById('tabListBtn');
       const backFolderBtn = document.getElementById('backFolderBtn');
@@ -380,9 +397,9 @@
           folderHeader.classList.remove('hidden');
           const emoji = getCategoryEmoji(activeFolderCategory);
           document.getElementById('folderTitleEmoji').innerText = emoji;
-          document.getElementById('folderTitleText').innerText = `Folder: ${activeFolderCategory}`;
+          document.getElementById('folderTitleText').innerText = `Folder: ${formatCategoryTitle(activeFolderCategory)}`;
 
-          const categoryItems = rawProducts.filter(p => (p.kategori || 'Umum').toLowerCase() === activeFolderCategory.toLowerCase());
+          const categoryItems = rawProducts.filter(p => (p.kategori || 'Lainnya').toLowerCase() === activeFolderCategory.toLowerCase());
           document.getElementById('folderSubtitleText').innerText = `${categoryItems.length} Sparepart Terdaftar`;
         } else {
           backFolderBtn.classList.add('hidden');
@@ -412,10 +429,9 @@
 
       folderGrid.className = "grid grid-cols-2 gap-3";
 
-      // Group products by category
       const categoriesMap = {};
       rawProducts.forEach(p => {
-        const kat = p.kategori || 'Umum / Lainnya';
+        const kat = p.kategori || 'Lainnya';
         if (!categoriesMap[kat]) {
           categoriesMap[kat] = { count: 0, totalStok: 0 };
         }
@@ -432,11 +448,12 @@
       folderGrid.innerHTML = categoryNames.map(kat => {
         const info = categoriesMap[kat];
         const emoji = getCategoryEmoji(kat);
+        const titleFormatted = formatCategoryTitle(kat);
 
         return `
           <div onclick="openFolder('${kat.replace(/'/g, "\\'")}')" class="folder-card border border-slate-200 hover:border-blue-400 active:scale-95 transition-all">
             <div class="flex items-start justify-between">
-              <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold border border-blue-100 shrink-0">
+              <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-bold border border-blue-100 shrink-0 shadow-xs">
                 ${emoji}
               </div>
               <span class="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-mono font-extrabold border border-slate-200">
@@ -445,7 +462,7 @@
             </div>
 
             <div>
-              <h3 class="font-extrabold text-slate-900 text-xs sm:text-sm leading-snug line-clamp-2">${kat}</h3>
+              <h3 class="font-extrabold text-slate-900 text-xs sm:text-sm leading-snug line-clamp-2">${titleFormatted}</h3>
               <p class="text-[11px] font-semibold text-slate-400 mt-1 flex items-center justify-between">
                 <span>Total Stok:</span>
                 <span class="font-mono font-bold text-emerald-600">${info.totalStok}</span>
@@ -497,7 +514,7 @@
               <h3 class="font-extrabold text-slate-900 text-xs sm:text-sm leading-snug truncate">${item.nama}</h3>
               <div class="flex items-center gap-2 mt-0.5">
                 <span class="text-xs font-extrabold font-mono text-emerald-600">${formatRupiah(item.harga_jual)}</span>
-                <span class="text-[10px] text-slate-400 font-semibold truncate">(${item.kategori || 'Umum'})</span>
+                <span class="text-[10px] text-slate-400 font-semibold truncate">(${formatCategoryTitle(item.kategori)})</span>
               </div>
             </div>
 
